@@ -1,2 +1,8 @@
 # Snare
-C# TCP networking library for voice and message chat rooms 
+C# TCP networking library 
+
+Dependencies
+	Bolt: https://github.com/maelishere/Bolt
+
+Primary Use
+	Voice And Message Chat Rooms 
