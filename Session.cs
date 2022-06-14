@@ -9,7 +9,7 @@ namespace Snare
 
     public class Session : Dispatch
     {
-        public delegate void Reading(int peer, byte type, ref Reader reader);
+        public delegate void ReadFrom(int peer, ref Reader reader);
 
         private readonly Dictionary<int, Socket> m_peers = new Dictionary<int, Socket>();
 
@@ -40,12 +40,11 @@ namespace Snare
             return false;
         }
 
-        public bool Send(int peer, byte type, Write callback)
+        public bool Send(int peer, Write callback)
         {
             if (m_peers.TryGetValue(peer, out Socket socket))
             {
                 m_writer.Reset();
-                m_writer.Write(type);
                 callback?.Invoke(ref m_writer);
                 socket.BeginSend(m_writer.ToArray(), 0, m_writer.Current, SocketFlags.None,
                     (IAsyncResult ar) =>
@@ -57,7 +56,7 @@ namespace Snare
             return false;
         }
 
-        public void Update(int timeout, Action<int> joined, Reading received)
+        public void Update(int timeout, Action<int> joined, ReadFrom received)
         {
             while (m_socket.Poll(timeout, SelectMode.SelectRead))
             {
@@ -76,7 +75,7 @@ namespace Snare
                         {
                             int size = peer.Value.EndReceive(ar);
                             Reader reader = new Reader(new Segment(m_buffer, 0, size));
-                            received?.Invoke(peer.Key, reader.Read(), ref reader);
+                            received?.Invoke(peer.Key, ref reader);
                         }, null);
                 }
             }

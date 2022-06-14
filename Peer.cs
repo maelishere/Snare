@@ -8,8 +8,6 @@ namespace Snare
 
     public class Peer : Dispatch
     {
-        public delegate void Reading(byte type, ref Reader reader);
-
         public Peer(EndPoint session) : base()
         {
             m_socket.BeginConnect(session,
@@ -37,10 +35,9 @@ namespace Snare
                 }, null);
         }
 
-        public void Send(byte type, Write callback)
+        public void Send(Write callback)
         {
             m_writer.Reset();
-            m_writer.Write(type);
             callback?.Invoke(ref m_writer);
             m_socket.BeginSend(m_writer.ToArray(), 0, m_writer.Current, SocketFlags.None,
                 (IAsyncResult ar) =>
@@ -49,7 +46,7 @@ namespace Snare
                 }, null);
         }
 
-        public void Update(int timeout, Reading received)
+        public void Update(int timeout, Read received)
         {
             while (m_socket.Poll(timeout, SelectMode.SelectRead))
             {
@@ -58,7 +55,7 @@ namespace Snare
                     {
                         int size = m_socket.EndReceive(ar);
                         Reader reader = new Reader(new Segment(m_buffer, 0, size));
-                        received?.Invoke(reader.Read(), ref reader);
+                        received?.Invoke(ref reader);
                     }, null);
             }
         }
