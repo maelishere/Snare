@@ -9,7 +9,7 @@ namespace Snare
 
     public class Session : Dispatch
     {
-        public delegate bool Reading(int peer, byte type, ref Reader reader);
+        public delegate void Reading(int peer, byte type, ref Reader reader);
 
         private readonly Dictionary<int, Socket> m_peers = new Dictionary<int, Socket>();
 

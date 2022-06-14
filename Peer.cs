@@ -8,7 +8,7 @@ namespace Snare
 
     public class Peer : Dispatch
     {
-        public delegate bool Reading(byte type, ref Reader reader);
+        public delegate void Reading(byte type, ref Reader reader);
 
         public Peer(EndPoint session) : base()
         {
