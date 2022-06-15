@@ -11,14 +11,23 @@ namespace Snare
 
         protected Writer m_writer = new Writer();
 
-        internal Dispatch()
+        internal Dispatch(Family family)
         {
-            m_socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-        }
+            switch (family)
+            {
+                case Family.Dual:
+                    m_socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                    break;
 
-        internal Dispatch(AddressFamily family)
-        {
-            m_socket = new Socket(family, SocketType.Stream, ProtocolType.Tcp);
+                case Family.IPV6:
+                    m_socket = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
+                    break;
+
+                case Family.IPV4:
+                default:
+                    m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    break;
+            }
         }
 
         public void Close()

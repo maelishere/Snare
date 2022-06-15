@@ -11,21 +11,16 @@ namespace Snare
     {
         public delegate void ReadFrom(int peer, ref Reader reader);
 
+        private readonly Queue<int> m_outgoing = new Queue<int>();
         private readonly Dictionary<int, Socket> m_peers = new Dictionary<int, Socket>();
 
-        public Session(EndPoint listen, int max) : base()
+        public Session(Family family, EndPoint listen, int max) : base(family)
         {
             m_socket.Bind(listen);
             m_socket.Listen(max);
         }
 
-        public Session(AddressFamily family, EndPoint listen, int max) : base(family)
-        {
-            m_socket.Bind(listen);
-            m_socket.Listen(max);
-        }
-
-        public bool Kickout(int peer)
+        public bool Disconnect(int peer)
         {
             if (m_peers.TryGetValue(peer, out Socket socket))
             {
@@ -56,14 +51,21 @@ namespace Snare
             return false;
         }
 
-        public void Update(int timeout, Action<int> joined, ReadFrom received)
+        public void Update(int timeout, Action<int> connected, ReadFrom received, Action<int> disconnected)
         {
             while (m_socket.Poll(timeout, SelectMode.SelectRead))
             {
                 Socket socket = m_socket.Accept();
                 int id = socket.RemoteEndPoint.Serialize().GetHashCode();
                 m_peers.Add(id, socket);
-                joined?.Invoke(id);
+
+                // make sure we can use socket.connected
+                Send(id,
+                    (ref Writer writer) =>
+                    {
+                        writer.Write(new byte[32]);
+                    });
+                connected?.Invoke(id);
             }
 
             foreach (var peer in m_peers)
@@ -77,7 +79,18 @@ namespace Snare
                             Reader reader = new Reader(new Segment(m_buffer, 0, size));
                             received?.Invoke(peer.Key, ref reader);
                         }, null);
+
+                    if (!peer.Value.Connected)
+                    {
+                        disconnected?.Invoke(peer.Key);
+                        m_outgoing.Enqueue(peer.Key);
+                    }
                 }
+            } 
+            
+            while (m_outgoing.Count > 0)
+            {
+                m_peers.Remove(m_outgoing.Dequeue());
             }
         }
     }

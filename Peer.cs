@@ -8,30 +8,31 @@ namespace Snare
 
     public class Peer : Dispatch
     {
-        public Peer(EndPoint session) : base()
+        public Peer(Family family, EndPoint session, Action connected) : base(family)
         {
             m_socket.BeginConnect(session,
                 (IAsyncResult ar) =>
                 {
                     m_socket.EndConnect(ar);
+
+                    // make sure we can use socket.connected
+                    Send(
+                        (ref Writer writer) =>
+                        {
+                            writer.Write(new byte[32]);
+                        });
+
+                    connected?.Invoke();
                 }, null);
         }
 
-        public Peer(AddressFamily family, EndPoint session) : base(family)
-        {
-            m_socket.BeginConnect(session,
-                (IAsyncResult ar) =>
-                {
-                    m_socket.EndConnect(ar);
-                }, null);
-        }
-
-        public void Leave()
+        public void Disconnect(Action left = null)
         {
             m_socket.BeginDisconnect(false,
                 (IAsyncResult ar) =>
                 {
                     m_socket.EndConnect(ar);
+                    left?.Invoke();
                 }, null);
         }
 
@@ -46,7 +47,7 @@ namespace Snare
                 }, null);
         }
 
-        public void Update(int timeout, Read received)
+        public bool Update(int timeout, Read received)
         {
             while (m_socket.Poll(timeout, SelectMode.SelectRead))
             {
@@ -58,6 +59,7 @@ namespace Snare
                         received?.Invoke(ref reader);
                     }, null);
             }
+            return m_socket.Connected;
         }
     }
 }
