@@ -27,7 +27,7 @@ namespace Snare
                 socket.BeginDisconnect(false,
                     (IAsyncResult ar) =>
                     {
-                        socket.EndSend(ar);
+                        socket.EndDisconnect(ar);
                         m_peers.Remove(peer);
                     }, null);
                 return true;
@@ -55,17 +55,21 @@ namespace Snare
         {
             while (m_socket.Poll(timeout, SelectMode.SelectRead))
             {
-                Socket socket = m_socket.Accept();
-                int id = socket.RemoteEndPoint.Serialize().GetHashCode();
-                m_peers.Add(id, socket);
-
-                // make sure we can use socket.connected
-                Send(id,
-                    (ref Writer writer) =>
+                m_socket.BeginAccept(
+                    (IAsyncResult ar) =>
                     {
-                        writer.Write(new byte[32]);
-                    });
-                connected?.Invoke(id);
+                        Socket socket = m_socket.EndAccept(ar);
+                        int id = socket.RemoteEndPoint.Serialize().GetHashCode();
+                        m_peers.Add(id, socket);
+
+                        // make sure we can use socket.connected
+                        Send(id,
+                            (ref Writer writer) =>
+                            {
+                                writer.Write(new byte[32]);
+                            });
+                        connected?.Invoke(id);
+                    }, null);
             }
 
             foreach (var peer in m_peers)

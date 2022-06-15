@@ -31,7 +31,7 @@ namespace Snare
             m_socket.BeginDisconnect(false,
                 (IAsyncResult ar) =>
                 {
-                    m_socket.EndConnect(ar);
+                    m_socket.EndDisconnect(ar);
                     left?.Invoke();
                 }, null);
         }
