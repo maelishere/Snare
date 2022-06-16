@@ -8,7 +8,10 @@ namespace Snare
 
     public class Peer : Dispatch
     {
-        public Peer(Family family, EndPoint session, Action connected) : base(family)
+        public int Local { get; }
+        public int Remote { get; }
+
+        public Peer(Family family, EndPoint session, Action<int, int> connected) : base(family)
         {
             m_socket.BeginConnect(session,
                 (IAsyncResult ar) =>
@@ -21,9 +24,14 @@ namespace Snare
                         {
                             writer.Write(new byte[32]);
                         });
-
-                    connected?.Invoke();
                 }, null);
+
+            if (m_socket.Connected)
+            {
+                Local = m_socket.LocalEndPoint.Serialize().GetHashCode();
+                Remote = m_socket.RemoteEndPoint.Serialize().GetHashCode();
+                connected?.Invoke(Local, Remote);
+            }
         }
 
         public void Disconnect(Action left = null)

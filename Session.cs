@@ -14,11 +14,15 @@ namespace Snare
         private readonly Queue<int> m_outgoing = new Queue<int>();
         private readonly Dictionary<int, Socket> m_peers = new Dictionary<int, Socket>();
 
+        public int Listen { get; }
+
         public Session(Family family, int port, int max) : base(family)
         {
-            m_socket.Bind(new IPEndPoint(
-                family == Family.IPV4 ? IPAddress.Any : IPAddress.IPv6Any, port));
+            EndPoint listen = new IPEndPoint(
+                family == Family.IPV4 ? IPAddress.Any : IPAddress.IPv6Any, port);
+            m_socket.Bind(listen);
             m_socket.Listen(max);
+            Listen = listen.Serialize().GetHashCode();
         }
 
         public bool Disconnect(int peer)
