@@ -6,12 +6,12 @@ namespace Snare
 {
     using Bolt;
 
-    public class Peer : Dispatch
+    public class Member : Dispatch
     {
         public int Local { get; }
         public int Remote { get; }
 
-        public Peer(Family family, EndPoint session, Action<int, int> connected) : base(family)
+        public Member(Family family, EndPoint session, Action<int, int> connected) : base(family)
         {
             m_socket.BeginConnect(session,
                 (IAsyncResult ar) =>
